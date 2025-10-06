@@ -454,24 +454,35 @@ const Pagamento: React.FC = () => {
         : Number(orderData.total_amount);
 
       // Crea l'ordine nel database dopo la conferma del pagamento
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert([{ 
-          order_number: generateClientOrderNumber(),
-          user_id: orderData.user_id,
-          customer_name: orderData.customer_name,
-          customer_email: orderData.customer_email,
-          customer_phone: orderData.customer_phone,
-          pickup_date: orderData.pickup_date,
-          pickup_time: orderData.pickup_time,
-          payment_method: orderData.payment_method,
-          payment_status: 'paid',
-          total_amount: paidTotalEuros,
-          notes: orderData.notes,
-        }])
-        .select()
-        .single();
-
+      let order: any = null;
+      let orderError: any = null;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const { data, error } = await supabase
+          .from('orders')
+          .insert([{ 
+            user_id: orderData.user_id,
+            customer_name: orderData.customer_name,
+            customer_email: orderData.customer_email,
+            customer_phone: orderData.customer_phone,
+            pickup_date: orderData.pickup_date,
+            pickup_time: orderData.pickup_time,
+            payment_method: orderData.payment_method,
+            payment_status: 'paid',
+            total_amount: paidTotalEuros,
+            notes: orderData.notes,
+          }])
+          .select()
+          .single();
+        order = data;
+        orderError = error;
+        if (!orderError) break;
+        const code = orderError.code?.toString();
+        const status = orderError.status?.toString();
+        const isConflict = code === '23505' || code === '409' || status === '409';
+        if (!isConflict) break;
+        const jitterMs = 150 + Math.floor(Math.random() * 250);
+        await new Promise(res => setTimeout(res, jitterMs));
+      }
       if (orderError) throw orderError;
 
       // Applica i dettagli dello sconto direttamente all'ordine per evitare sovrascritture del totale
@@ -494,7 +505,6 @@ const Pagamento: React.FC = () => {
         }
       }
 
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const orderItems = orderData.items.map(item => ({
         order_id: order.id,
         dish_id: typeof item.id === 'string' && uuidRegex.test(item.id) ? item.id : null,
@@ -562,24 +572,35 @@ const Pagamento: React.FC = () => {
         ? Number(intent.amount) / 100
         : Number(orderData.total_amount);
 
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert([{ 
-          order_number: generateClientOrderNumber(),
-          user_id: orderData.user_id,
-          customer_name: orderData.customer_name,
-          customer_email: orderData.customer_email,
-          customer_phone: orderData.customer_phone,
-          pickup_date: orderData.pickup_date,
-          pickup_time: orderData.pickup_time,
-          payment_method: orderData.payment_method,
-          payment_status: 'paid',
-          total_amount: paidTotalEuros,
-          notes: orderData.notes,
-        }])
-        .select()
-        .single();
-
+      let order: any = null;
+      let orderError: any = null;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const { data, error } = await supabase
+          .from('orders')
+          .insert([{ 
+            user_id: orderData.user_id,
+            customer_name: orderData.customer_name,
+            customer_email: orderData.customer_email,
+            customer_phone: orderData.customer_phone,
+            pickup_date: orderData.pickup_date,
+            pickup_time: orderData.pickup_time,
+            payment_method: orderData.payment_method,
+            payment_status: 'paid',
+            total_amount: paidTotalEuros,
+            notes: orderData.notes,
+          }])
+          .select()
+          .single();
+        order = data;
+        orderError = error;
+        if (!orderError) break;
+        const code = orderError.code?.toString();
+        const status = orderError.status?.toString();
+        const isConflict = code === '23505' || code === '409' || status === '409';
+        if (!isConflict) break;
+        const jitterMs = 150 + Math.floor(Math.random() * 250);
+        await new Promise(res => setTimeout(res, jitterMs));
+      }
       if (orderError) throw orderError;
 
       // Applica i dettagli dello sconto direttamente all'ordine per evitare sovrascritture del totale
@@ -602,7 +623,6 @@ const Pagamento: React.FC = () => {
         }
       }
 
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const orderItems = orderData.items.map(item => ({
         order_id: order.id,
         dish_id: typeof item.id === 'string' && uuidRegex.test(item.id) ? item.id : null,
