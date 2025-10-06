@@ -1,0 +1,184 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Mobile dropdown: slide in from top */
+@keyframes slideInDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Scrolling animations for reviews */
+@keyframes scrollLeft {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes scrollRight {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.animate-slide-in-up {
+  animation: slideInUp 0.3s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.4s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.4s ease-out;
+}
+
+.animate-slide-in-down {
+  animation: slideInDown 0.3s ease-out;
+}
+
+/* Dropdown espansione completa (apertura lenta dall'alto verso il basso) */
+@keyframes expandDown {
+  0% {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  100% {
+    max-height: 90vh;
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-expand-down {
+  animation: expandDown 600ms ease-out;
+  overflow: hidden;
+}
+
+.animate-scroll-left {
+  animation: scrollLeft 30s linear infinite;
+}
+
+.animate-scroll-right {
+  animation: scrollRight 30s linear infinite;
+}
+
+/* Delivery options open animation (staggerable) */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.fade-slide-in {
+  animation: fadeSlideIn 600ms ease-out forwards;
+}
+
+/* Dropdown open/close transition (keep mounted) */
+.dropdown-anim {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    max-height 450ms ease,
+    opacity 350ms ease,
+    transform 350ms ease;
+  will-change: max-height, opacity, transform;
+}
+
+.dropdown-anim.open {
+  max-height: 90vh;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Cart icon bump on item arrival */
+@keyframes cartBump {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.cart-bump {
+  animation: cartBump 300ms ease;
+}
+
+/* --- Stripe 3DS overlay hardening (mobile) --- */
+/* Ensure page chrome doesn't create stacking contexts that sit above Stripe's challenge */
+html, body, #root {
+  position: static !important;
+  transform: none !important;
+}
+
+/* Raise Stripe private frames above any z-index overlays and allow touch events */
+iframe[name^="__privateStripeFrame"], iframe[name^="__stripe"] {
+  z-index: 2147483647 !important;
+  pointer-events: auto !important;
+}
+
+/* In case a full-screen container overlaps, disable pointer-events specifically on pagamento chrome wrappers */
+.pagamento-isolation *[data-overlay], .pagamento-isolation .fixed, .pagamento-isolation .sticky {
+  pointer-events: none !important;
+}
