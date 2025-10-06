@@ -9,6 +9,9 @@ import { supabase } from '../lib/supabase';
 import Button from '../components/UI/Button';
 import Card from '../components/UI/Card';
 
+// UUID v4 regex used to detect dish IDs vs custom items
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 interface OrderData {
   user_id: string;
   customer_name: string;
