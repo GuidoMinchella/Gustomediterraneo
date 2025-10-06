@@ -9,6 +9,9 @@ import Card from '../components/UI/Card';
 import LoginModal from '../components/Auth/LoginModal';
 import RegisterModal from '../components/Auth/RegisterModal';
 
+// UUID v4 regex used to detect dish IDs vs custom items
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const Prenotazione: React.FC = () => {
   const { items, updateQuantity, removeItem, clearCart, total, itemsCount, discountInfo, discountLoading } = useCart();
   const { user } = useAuth();
@@ -325,12 +328,24 @@ const Prenotazione: React.FC = () => {
         notes: formData.notes || null,
       };
 
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert([orderData])
-        .select()
-        .single();
-
+      // Insert order with a simple 409-conflict retry to handle concurrent order_number generation
+      let order: any = null;
+      let orderError: any = null;
+      const attemptInsert = async () => {
+        const { data, error } = await supabase
+          .from('orders')
+          .insert([orderData])
+          .select()
+          .single();
+        order = data;
+        orderError = error;
+      };
+      await attemptInsert();
+      if (orderError && (orderError.status === 409 || orderError.code === '409')) {
+        // Brief backoff and retry once
+        await new Promise(res => setTimeout(res, 250));
+        await attemptInsert();
+      }
       if (orderError) {
         throw orderError;
       }
