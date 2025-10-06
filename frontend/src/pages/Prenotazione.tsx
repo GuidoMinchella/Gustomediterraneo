@@ -328,10 +328,10 @@ const Prenotazione: React.FC = () => {
         notes: formData.notes || null,
       };
 
-      // Insert order with a simple 409-conflict retry to handle concurrent order_number generation
+      // Insert order with conflict-aware retry to handle concurrent order_number generation
       let order: any = null;
       let orderError: any = null;
-      const attemptInsert = async () => {
+      for (let attempt = 0; attempt < 5; attempt++) {
         const { data, error } = await supabase
           .from('orders')
           .insert([orderData])
@@ -339,12 +339,16 @@ const Prenotazione: React.FC = () => {
           .single();
         order = data;
         orderError = error;
-      };
-      await attemptInsert();
-      if (orderError && (orderError.status === 409 || orderError.code === '409')) {
-        // Brief backoff and retry once
-        await new Promise(res => setTimeout(res, 250));
-        await attemptInsert();
+
+        if (!orderError) break;
+
+        const code = orderError.code?.toString();
+        const status = orderError.status?.toString();
+        const isConflict = code === '23505' || code === '409' || status === '409';
+        // If it's a unique violation/conflict on order_number, backoff and retry
+        if (!isConflict) break;
+        const jitterMs = 150 + Math.floor(Math.random() * 250);
+        await new Promise(res => setTimeout(res, jitterMs));
       }
       if (orderError) {
         throw orderError;
@@ -370,8 +374,7 @@ const Prenotazione: React.FC = () => {
         console.log('Discount applied successfully:', discountResult);
       }
 
-      // Create order items - allow custom items without UUID dish_id
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      // Create order items - allow custom items without UUID dish_id (use module-level uuidRegex)
       const orderItems = items.map(item => ({
         order_id: order.id,
         dish_id: typeof item.id === 'string' && uuidRegex.test(item.id) ? item.id : null,
